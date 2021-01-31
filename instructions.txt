@@ -1,0 +1,45 @@
+# how to link SNS to Google Chat using webhooks
+# 1. "create the SNS topic" that will be used to notifications
+# 2. copy its ARN 
+# 3. create an event rule to send this information to SNS Topics
+# --> the example they use is for CodeBuild events. They put CodeBuild
+#     as the service name, and code build state change as the event type
+# --> here is an example of the JSON object they used:
+#     {
+        “source”: [
+            “aws.codebuild”
+        ],
+        “detail-type”: [
+            “CodeBuild Build State Change”
+        ],
+        “detail”: {
+            “build-status”: [
+            “IN_PROGRESS”,
+            “SUCCEEDED”,
+            “FAILED”,
+            “STOPPED”
+            ]
+        }
+        }
+# --> under target they selected the topic name 
+# --> under configure input they selected input transformer and put down this:
+# {“build-status”:”$.detail.build-status”,”project-name”:”$.detail.project-name”,”build-id”:”$.detail.build-id”}
+# “The build ‘<build-id>’ for project ‘<project-name>’ reached status ‘<build-status>’.”
+# 4. under the drop down menu for a new chat room in google chat, select configure webhooks
+# --> choose a name for chatbot and input a URL for the chatbot icon
+# 5. copy the WebHook URL
+# 6. Set up the lambda as your SNS topic subscriber
+# --> (I'm using Javascript, bc I had issues with my own version for this? (similar to this: https://aws.amazon.com/premiumsupport/knowledge-center/sns-lambda-webhooks-chime-slack-teams/, https://github.com/AntonUspehov/aws-sns-to-google-chat/blob/master/lambda_function.py))
+# --> see lambda_subscriber.js
+# 7. then set the environment variable with the Google Chat WebHook URL from 5. into the lambda on the AWS console
+# 8. configure it to receive SNS notifications from the SNS topic. 
+# --> Select the SNS from the Add Triggers menu, then select the topic from the ComboBox and save.
+# WARNING: According to Google, the chatbot might not work for everyone? 
+# --> "If only select organizational units (OUs) in your domain have bots enabled, incoming webhooks created in a room will fail with the following error"
+# --> {
+  "error": {
+    "code": 403,
+    "message": "The caller does not have permission",
+    "status": "PERMISSION_DENIED"
+  }
+}
